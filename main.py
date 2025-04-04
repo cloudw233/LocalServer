@@ -76,11 +76,11 @@ async def weather_(weather: Weather):
     __weather = QWeather(__city, httpx_client)
     return await __weather.get_7days()
 
-@app.post("/api/weather/index")
-async def index(weather: Weather):
+@app.post("/api/weather/indices")
+async def indices(weather: Weather):
     __city = weather.city
     __weather = QWeather(__city, httpx_client)
-    return await __weather.get_index()
+    return await __weather.get_indices()
 
 @app.post("/api/weather/aqi")
 async def aqi(weather: Weather):

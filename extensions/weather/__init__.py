@@ -53,7 +53,7 @@ class QWeather:
         else:
             raise ValueError(f"City {self.city} not found.")
 
-    async def get_index(self, city_id=None):
+    async def get_indices(self, city_id=None):
         """
         获取生活指数，
         参见 https://dev.qweather.com/docs/api/indices/indices1d/
