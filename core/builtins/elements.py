@@ -2,6 +2,7 @@ import orjson as json
 from typing import Literal, Union
 
 from core.pydantic_models import *
+from core.database.models import User
 from copy import deepcopy
 from attrs import define
 
@@ -49,6 +50,32 @@ class AccountElements:
     @classmethod
     def dump(cls):
         return str(json.dumps(cls.__dict__))
+
+    async def verify(self):
+        """
+        验证账户
+        :return 布尔值
+        """
+        if self.action == "register":
+            user = User(
+                username=self.username,
+                password=self.password,
+                face_recognition_data=self.face_recognition_data
+            )
+            await user.save()
+            return True
+        elif self.action == "login":
+            user = await User.get(username=self.username)
+            if user:
+                if user.password == self.password:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        elif self.action == "data":
+            return True
+
 
 @define
 class SensorElements:
@@ -323,6 +350,44 @@ class DeepSeekAnswerElements:
     def dump(cls):
         return str(json.dumps(cls.__dict__))
 
+@define
+class ResponseElements:
+    """
+    响应元素
+    """
+    ret_code: int
+    msg: str
+
+    class Meta:
+        type = "ResponseElement"
+
+    mapping = {
+        0: "Success",
+        1: "Warning",
+        2: "Error",
+    }
+
+    @classmethod
+    def assign(
+            cls,
+            ret_code: Literal[0,1,2],
+            msg: str = None
+    ):
+        """
+        响应元素
+        :param ret_code: 返回码，0:成功，1:警告，2:错误
+        :param msg: 详细
+        :return:
+        """
+        return deepcopy(cls(
+            ret_code=ret_code,
+            msg=f"[{cls.mapping[ret_code]}] {msg}"
+        ))
+
+    @classmethod
+    def dump(cls):
+        return str(json.dumps(cls.__dict__))
+
 __all__ = [
     'AccountElements',
     'SensorElements',
@@ -331,5 +396,6 @@ __all__ = [
     'UIElements',
     'HeartElements',
     'DeepSeekElements',
-    'DeepSeekAnswerElements'
+    'DeepSeekAnswerElements',
+    'ResponseElements'
 ]

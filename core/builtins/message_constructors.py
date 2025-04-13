@@ -5,7 +5,7 @@ from .assigned_element import *
 
 
 class MessageChainInstance:
-    messages: list[Union[Union[
+    messages: Union[list[Union[
         AccountElement,
         SensorElement,
         WeatherElement,
@@ -13,11 +13,14 @@ class MessageChainInstance:
         UIElement,
         HeartElement,
         DeepSeekElement,
-        DeepSeekAnswerElement], dict
-    ]] = None
+        DeepSeekAnswerElement,
+        ResponseElement]], list[dict]
+    ] = None
     serialized: bool = None
 
     def deserialize(self):
+        if not self.serialized:
+            return self.messages
         self.messages = [{"meta": element.Meta.type, "data": element.dump()} for element in self.messages]
         self.serialized = False
         return self.messages
@@ -44,6 +47,8 @@ class MessageChainInstance:
                     msg_chain_lst.append(DeepSeekElement(**data))
                 case "DeepSeekAnswerElement":
                     msg_chain_lst.append(DeepSeekAnswerElement(**data))
+                case "ResponseElement":
+                    msg_chain_lst.append(ResponseElement(**data))
                 case _:
                     assert False, "Unknown message type: {meta}"
 
@@ -57,11 +62,19 @@ class MessageChainInstance:
                    UIElement,
                    HeartElement,
                    DeepSeekElement,
-                   DeepSeekAnswerElement]]) -> "MessageChain":
+                   DeepSeekAnswerElement,
+                   ResponseElement]]) -> "MessageChain":
         cls.serialized = True
         cls.messages = elements
         return deepcopy(cls())
 
-MessageChain = MessageChainInstance.assign
+    @classmethod
+    def assign_deserialized(cls, elements: list[dict]) -> "MessageChain":
+        cls.serialized = False
+        cls.messages = elements
+        return deepcopy(cls())
 
-__all__ = ["MessageChain"]
+MessageChain = MessageChainInstance.assign
+MessageChainD = MessageChainInstance.assign_deserialized
+
+__all__ = ["MessageChain", "MessageChainD"]

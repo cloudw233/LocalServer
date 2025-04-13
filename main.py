@@ -1,26 +1,23 @@
-import orjson as json
-
 import loguru, uvicorn, logging, httpx
 
-from fastapi import FastAPI, APIRouter, WebSocket
-from pydantic_core import from_json
+from fastapi import FastAPI, WebSocket
 from contextlib import asynccontextmanager
 
-from core.database.models import User
 from core.pydantic_models import *
-from core.utils.ws_connect import switch_data, switch_heart_data
 
 from extensions.weather import QWeather
 from extensions.deepseek import get_deepseek_anwser
 
 from core.database import init_db
+from core.network.ws_connect import switch_data
 
 httpx_client = httpx.AsyncClient()
 
-sensor_pool = {}
-client_pool = {}
-monitor_pool = {}
-heart_pool = {}
+connection_pool = {
+    "client": {},
+    "sensor": {},
+    "monitor": {},
+}
 
 logger = loguru.logger
 
@@ -36,39 +33,20 @@ app = FastAPI(lifespan=httpx_c)
 
 
 
-# @app.websocket("/sensor")
-# async def sensor(websocket: WebSocket):
-#     await websocket.accept()
-#     while True:
-#         data = await websocket.receive_text()
-#         logger.debug(data)
-#         try:
-#             _sensor = Sensor.model_validate(from_json(data, allow_partial=True))
-#             usrname = _sensor.username
-#             if _sensor.action == 'data':
-#                 sensor_pool[usrname] = websocket
-#                 logger.debug(_sensor)
-#                 await websocket.send_text(str(json.dumps({'ret_code': 0})))
-#                 for connection in [client_pool, monitor_pool]:
-#                     if connection.get(usrname):
-#                         await client_pool[usrname].send_text(data)
-#
-#         except Exception as e:
-#             logger.error(e)
-#
-#
-# @app.websocket("/client")
-# async def client(websocket: WebSocket):
-#     await switch_data(client_pool, websocket, logger, Account, User)
-#
-#
-# @app.websocket("/monitor")
-# async def monitor(websocket: WebSocket):
-#     await switch_data(monitor_pool, websocket, logger, Account, User)
-#
-# @app.websocket("/heart")
-# async def heart(websocket: WebSocket):
-#     await switch_heart_data(client_pool, monitor_pool, heart_pool, websocket, logger, Account, Heart, User)
+@app.websocket("/sensor")
+async def sensor(websocket: WebSocket):
+    await switch_data(connection_pool, 'sensor', websocket, logger)
+
+
+@app.websocket("/client")
+async def client(websocket: WebSocket):
+    await switch_data(connection_pool, 'client', websocket, logger)
+
+
+@app.websocket("/monitor")
+async def monitor(websocket: WebSocket):
+    await switch_data(connection_pool, 'monitor', websocket, logger)
+
 
 @app.post("/api/weather/7days")
 async def weather_(weather: Weather):
