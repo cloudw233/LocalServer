@@ -1,6 +1,8 @@
 from copy import deepcopy
 from typing import Union
 
+from extensions.deepseek import get_deepseek_anwser
+from extensions.weather import QWeather
 from .assigned_element import *
 
 
@@ -74,7 +76,24 @@ class MessageChainInstance:
         cls.messages = elements
         return deepcopy(cls())
 
+
+async def process_message(httpx_client, message_lst, msgchain):
+    for element in msgchain.messages:
+        match element.Meta.type:
+            case "WeatherElement":
+                message_lst.append(QWeather(httpx_client).get_weather_element(element))
+            case "DeepSeekElement":
+                __answer = await get_deepseek_anwser(element.question)
+                message_lst.append(
+                    DeepSeekAnswerElement(
+                        answer=__answer,
+                        question=element.question,
+                    ))
+            case _:
+                message_lst.append(element)
+    message_lst.append(ResponseElement(ret_code=0, msg="Data received"))
+
 MessageChain = MessageChainInstance.assign
 MessageChainD = MessageChainInstance.assign_deserialized
 
-__all__ = ["MessageChain", "MessageChainD"]
+__all__ = ["MessageChain", "MessageChainD", "process_message"]

@@ -2,6 +2,9 @@ import httpx
 import orjson as json
 
 from urllib.parse import quote
+
+from core.builtins.assigned_element import WeatherInfoElement
+from core.builtins.elements import WeatherElements, WeatherInfoElements
 from core.utils.http import url_get
 from config import config
 from.key import generate_jwt
@@ -12,7 +15,7 @@ key = generate_jwt()
 header = {"X-QW-Api-Key": config("legacy_api_key")}
 
 class QWeather:
-    def __init__(self, city, client: httpx.AsyncClient):
+    def __init__(self, client: httpx.AsyncClient, city=None):
         self.__city_id = None
         self.__lon = None
         self.__lat = None
@@ -84,3 +87,26 @@ class QWeather:
             return response.get('now')
         else:
             raise ValueError(f"City {self.city} not found.")
+
+    async def get_weather_element(self, weather_element: WeatherElements) -> WeatherInfoElements:
+        """
+        获取天气元素
+        :param weather_element: 天气元素
+        :return: 返回的天气元素
+        """
+        if self.__city_id is None:
+            self.city = weather_element.city
+            await self.find_city()
+        city_id = await self.find_city()
+        daily = await self.get_7days(city_id)
+        indices = await self.get_indices(city_id)
+        weather_info = WeatherInfoElement(
+            indices=indices,
+            daily=daily,
+            city=self.city,
+            city_id=city_id,
+            lat=self.__lat,
+            lon=self.__lon
+        )
+        return weather_info
+

@@ -32,52 +32,53 @@ async def httpx_c(app: FastAPI):
 app = FastAPI(lifespan=httpx_c)
 
 
-
 @app.websocket("/sensor")
 async def sensor(websocket: WebSocket):
-    await switch_data(connection_pool, 'sensor', websocket, logger)
+    await switch_data(connection_pool, 'sensor', websocket, httpx_client, logger)
 
 
 @app.websocket("/client")
 async def client(websocket: WebSocket):
-    await switch_data(connection_pool, 'client', websocket, logger)
+    await switch_data(connection_pool, 'client', websocket, httpx_client, logger)
 
 
 @app.websocket("/monitor")
 async def monitor(websocket: WebSocket):
-    await switch_data(connection_pool, 'monitor', websocket, logger)
+    await switch_data(connection_pool, 'monitor', websocket, httpx_client, logger)
 
 
 @app.post("/api/weather/7days")
 async def weather_(weather: Weather):
     __city = weather.city
-    __weather = QWeather(__city, httpx_client)
+    __weather = QWeather(httpx_client, __city)
     return await __weather.get_7days()
+
 
 @app.post("/api/weather/indices")
 async def indices(weather: Weather):
     __city = weather.city
-    __weather = QWeather(__city, httpx_client)
+    __weather = QWeather(httpx_client, __city)
     return await __weather.get_indices()
+
 
 @app.post("/api/weather/aqi")
 async def aqi(weather: Weather):
     __city = weather.city
-    __weather = QWeather(__city, httpx_client)
+    __weather = QWeather(httpx_client, __city)
     return await __weather.get_aqi()
+
 
 @app.post("/api/weather/city")
 async def city(weather: Weather):
     __city = weather.city
-    __weather = QWeather(__city, httpx_client)
+    __weather = QWeather(httpx_client, __city)
     return await __weather.find_city()
+
 
 @app.post("/api/deepseek")
 async def deepseek(deepseek: DeepSeek):
     question = deepseek.question
     return await get_deepseek_anwser(question)
-     
-    
 
 
 if __name__ == "__main__":
