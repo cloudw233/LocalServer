@@ -101,6 +101,4 @@ if __name__ == "__main__":
         init_logger()
         server.run()
     except KeyboardInterrupt:
-        del client_pool
-        del sensor_pool
-        del monitor_pool
+        del connection_pool

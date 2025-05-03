@@ -7,17 +7,7 @@ from .assigned_element import *
 
 
 class MessageChainInstance:
-    messages: Union[list[Union[
-        AccountElement,
-        SensorElement,
-        WeatherElement,
-        WeatherInfoElement,
-        UIElement,
-        HeartElement,
-        DeepSeekElement,
-        DeepSeekAnswerElement,
-        ResponseElement]], list[dict]
-    ] = None
+    messages = None
     serialized: bool = None
 
     def deserialize(self):
@@ -31,7 +21,9 @@ class MessageChainInstance:
         if self.serialized:
             return self.messages
         msg_chain_lst = []
-        for meta, data in enumerate(self.messages):
+        for _ in self.messages:
+            meta = _.get("meta")
+            data = _.get("data")
             match meta:
                 case "AccountElement":
                     msg_chain_lst.append(AccountElement(**data))
@@ -52,7 +44,10 @@ class MessageChainInstance:
                 case "ResponseElement":
                     msg_chain_lst.append(ResponseElement(**data))
                 case _:
-                    assert False, "Unknown message type: {meta}"
+                    assert False, f"Unknown message type: {meta}"
+        self.messages = msg_chain_lst
+        self.serialized = True
+        return self.messages
 
     @classmethod
     def assign(cls,
@@ -77,11 +72,12 @@ class MessageChainInstance:
         return deepcopy(cls())
 
 
-async def process_message(httpx_client, message_lst, msgchain):
+async def process_message(httpx_client, msgchain):
+    message_lst = []
     for element in msgchain.messages:
         match element.Meta.type:
             case "WeatherElement":
-                message_lst.append(QWeather(httpx_client).get_weather_element(element))
+                message_lst.append(await QWeather(httpx_client).get_weather_element(element))
             case "DeepSeekElement":
                 __answer = await get_deepseek_anwser(element.question)
                 message_lst.append(
@@ -92,6 +88,7 @@ async def process_message(httpx_client, message_lst, msgchain):
             case _:
                 message_lst.append(element)
     message_lst.append(ResponseElement(ret_code=0, msg="Data received"))
+    msgchain.messages = message_lst
 
 MessageChain = MessageChainInstance.assign
 MessageChainD = MessageChainInstance.assign_deserialized

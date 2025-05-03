@@ -1,11 +1,12 @@
+import traceback
+
 import httpx
 import loguru
+import orjson as json
 
 from fastapi import WebSocket
 
 from core.builtins.message_constructors import MessageChainD, process_message
-from pydantic_core import from_json
-from core.utils.http import resp
 
 
 async def switch_data(
@@ -24,33 +25,34 @@ async def switch_data(
     :return:
     """
     await websocket.accept()
-    recv_data = await websocket.receive_text()
+    recv_data = dict(await websocket.receive()).get("bytes").decode("utf-8").replace("\\", '')
     logger.debug(recv_data)
-    recv_data = from_json(recv_data, allow_partial=True)
-    msgchain = MessageChainD(recv_data).serialize()
-    usrname, action, verified = msgchain[0].username, msgchain[0].action, msgchain[0].verify()
+    recv_data = json.loads(recv_data)
+    msgchain = MessageChainD(recv_data)
+    msgchain.serialize()
+    msgchain_data = msgchain.messages
+    usrname, action, verified = msgchain_data[0].username, msgchain_data[0].action, (await msgchain_data[0].verify())
     while True:
         try:
             if verified and usrname not in pool[pool_name]:
                 pool[pool_name][usrname] = websocket
             else:
-                await resp(websocket, 2, "Account verification failed")
                 del pool[pool_name][usrname]
                 break
-            if action == "data":
-                logger.debug(msgchain)
-                message_lst = []
-                await resp(websocket, 0, "Data received")
-                await process_message(httpx_client, message_lst, msgchain)
-                for connection in [pool["client"], pool["monitor"]]:
-                    if connection.get(usrname):
-                        await connection[usrname].send_text(msgchain.deserialize())
-            if action == "login":
-                await resp(websocket, 0, "Login successful")
-                await pool["sensor"][usrname].send_text(msgchain.deserialize())
-            if action == "register":
-                await resp(websocket, 0, "Register successful")
-                await pool["sensor"][usrname].send_text(msgchain.deserialize())
+            match action:
+                case "data":
+                    logger.debug(msgchain_data)
+                    message_lst = []
+                    await process_message(httpx_client, msgchain)
+                    for connection in [pool["client"], pool["monitor"]]:
+                        if connection.get(usrname):
+                            await connection[usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
+                case "login":
+                    await pool["sensor"][usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
+                case "register":
+                    await pool["sensor"][usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
         except Exception as e:
             del pool[pool_name][usrname]
             logger.error(e)
+            traceback.print_exc()
+            break
