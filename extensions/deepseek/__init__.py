@@ -17,7 +17,7 @@ async def get_deepseek_anwser(question: str) -> str:
 
         response = await client.chat.completions.create(
             model = 'deepseek-ai/DeepSeek-V3',
-            messages=[{"role": "user", "content": question + '，请尽量简短回答，50字以内。'}],
+            messages=[{"role": "user", "content": question + '，请尽量简短回答，50字以内，不需要告诉我字数。'}],
             stream=False,
             max_tokens=1024
         )
@@ -37,4 +37,4 @@ async def get_deepseek_anwser(question: str) -> str:
 
 
 if __name__ == '__main__':
-    print(asyncio.run(get_deepseek_anwser("怎么看美俄结盟")))
+    print(asyncio.run(get_deepseek_anwser("怎么看美国关税对等政策？")))

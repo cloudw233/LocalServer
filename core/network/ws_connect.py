@@ -7,6 +7,7 @@ import orjson as json
 from fastapi import WebSocket
 
 from core.builtins.message_constructors import MessageChainD, process_message
+from core.utils.http import resp
 
 
 async def switch_data(
@@ -42,15 +43,14 @@ async def switch_data(
             match action:
                 case "data":
                     logger.debug(msgchain_data)
-                    message_lst = []
                     await process_message(httpx_client, msgchain)
                     for connection in [pool["client"], pool["monitor"]]:
                         if connection.get(usrname):
                             await connection[usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
                 case "login":
-                    await pool["sensor"][usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
+                    await resp(websocket, 0, "Login successful", 'login')
                 case "register":
-                    await pool["sensor"][usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
+                    await resp(websocket, 0, "Register successful", 'register')
         except Exception as e:
             del pool[pool_name][usrname]
             logger.error(e)

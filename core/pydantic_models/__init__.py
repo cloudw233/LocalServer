@@ -10,6 +10,8 @@ class Account(BaseModel):
     username: str
     action: Literal["login", "register", "data"]
     password: Union[str, int] = None
+    device_id: str = ' '
+    key: str = ' '
     face_recognition_data: str = None
 
 class Smoke(TypedDict):

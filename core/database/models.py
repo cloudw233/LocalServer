@@ -4,6 +4,8 @@ from tortoise import fields
 class User(Model):
     username = fields.CharField(max_length=50, pk=True)
     password = fields.CharField(max_length=50)
+    device_id = fields.JSONField()
+    key = fields.CharField(max_length=50)
     warning = fields.BooleanField()
 
     def __str__(self):

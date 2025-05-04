@@ -7,15 +7,23 @@ from core.database.models import User
 from copy import deepcopy
 from attrs import define
 
+class BaseElements:
+    def dump(self):
+        return {
+            field.name: getattr(self, field.name)
+            for field in attrs.fields(self.__class__)
+        }
 
 @define
-class AccountElements:
+class AccountElements(BaseElements):
     """
     账号元素
     """
     username: str
     action: Literal["login", "register", "data"]
     password: Union[str, int] = 0
+    device_id: str = ' '
+    key: str = ' '
     face_recognition_data: str = ' '
 
     class Meta:
@@ -27,6 +35,8 @@ class AccountElements:
             username: str,
             action: Literal["login", "register", "data"],
             password: Union[str, int] = 0,
+            device_id: str = ' ',
+            key: str = ' ',
             face_recognition_data: str = ' '
     ):
         """
@@ -34,6 +44,8 @@ class AccountElements:
         :param username: 用户名
         :param action: 操作
         :param password: 密码
+        :param device_id: 设备ID
+        :param key: 密钥
         :param face_recognition_data: 人脸验证数据
         :return: AccountElement类
         """
@@ -41,20 +53,18 @@ class AccountElements:
             username=username,
             action=action,
             password=password,
+            device_id=device_id,
+            key=key,
             face_recognition_data=face_recognition_data
         )
         return deepcopy(cls(
             username=model.username,
             action=model.action,
             password=model.password,
+            device_id=model.device_id,
+            key=model.key,
             face_recognition_data=model.face_recognition_data
         ))
-
-    def dump(self):
-        return {
-            field.name: getattr(self, field.name)
-            for field in attrs.fields(self.__class__)
-        }
 
     async def verify(self):
         """
@@ -65,6 +75,7 @@ class AccountElements:
             user = User(
                 username=self.username,
                 password=self.password,
+                device_id=[self.device_id],
                 face_recognition_data=self.face_recognition_data
             )
             await user.save()
@@ -79,7 +90,7 @@ class AccountElements:
 
 
 @define
-class SensorElements:
+class SensorElements(BaseElements):
     """
     传感器元素
     """
@@ -140,15 +151,9 @@ class SensorElements:
             seat=model.seat
         ))
 
-    def dump(self):
-        return {
-            field.name: getattr(self, field.name)
-            for field in attrs.fields(self.__class__)
-        }
-
 
 @define
-class WeatherElements:
+class WeatherElements(BaseElements):
     """
     天气元素
     """
@@ -172,15 +177,9 @@ class WeatherElements:
             city=model.city
         ))
 
-    def dump(self):
-        return {
-            field.name: getattr(self, field.name)
-            for field in attrs.fields(self.__class__)
-        }
-
 
 @define
-class WeatherInfoElements:
+class WeatherInfoElements(BaseElements):
     """
     天气信息元素
     """
@@ -231,15 +230,9 @@ class WeatherInfoElements:
             lon=model.lon
         ))
 
-    def dump(self):
-        return {
-            field.name: getattr(self, field.name)
-            for field in attrs.fields(self.__class__)
-        }
-
 
 @define
-class UIElements:
+class UIElements(BaseElements):
     """
     UI元素
     """
@@ -263,15 +256,9 @@ class UIElements:
             seat=model.seat
         ))
 
-    def dump(self):
-        return {
-            field.name: getattr(self, field.name)
-            for field in attrs.fields(self.__class__)
-        }
-
 
 @define
-class HeartElements:
+class HeartElements(BaseElements):
     """
     心率元素
     """
@@ -295,15 +282,9 @@ class HeartElements:
             bpm=model.bpm
         ))
 
-    def dump(self):
-        return {
-            field.name: getattr(self, field.name)
-            for field in attrs.fields(self.__class__)
-        }
-
 
 @define
-class DeepSeekElements:
+class DeepSeekElements(BaseElements):
     """
     深度求索元素
     """
@@ -327,15 +308,9 @@ class DeepSeekElements:
             question=model.question
         ))
 
-    def dump(self):
-        return {
-            field.name: getattr(self, field.name)
-            for field in attrs.fields(self.__class__)
-        }
-
 
 @define
-class DeepSeekAnswerElements:
+class DeepSeekAnswerElements(BaseElements):
     """
     深度求索答案元素
     """
@@ -363,15 +338,9 @@ class DeepSeekAnswerElements:
             answer=model.answer
         ))
 
-    def dump(self):
-        return {
-            field.name: getattr(self, field.name)
-            for field in attrs.fields(self.__class__)
-        }
-
 
 @define
-class ResponseElements:
+class ResponseElements(BaseElements):
     """
     响应元素
     """
@@ -380,6 +349,7 @@ class ResponseElements:
 
     class Meta:
         type = "ResponseElement"
+        flag = None
 
     mapping = {
         0: "Success",
@@ -391,24 +361,22 @@ class ResponseElements:
     def assign(
             cls,
             ret_code: Literal[0, 1, 2],
-            msg: str = None
+            msg: str = None,
+            flag: str = None
     ):
         """
         响应元素
         :param ret_code: 返回码，0:成功，1:警告，2:错误
-        :param msg: 详细
+        :param msg: 消息
+        :param flag: 标志
         :return:
         """
-        return deepcopy(cls(
+        tempcls = deepcopy(cls(
             ret_code=ret_code,
             msg=f"[{cls.mapping[ret_code]}] {msg}"
         ))
-
-    def dump(self):
-        return {
-            field.name: getattr(self, field.name)
-            for field in attrs.fields(self.__class__)
-        }
+        tempcls.Meta.flag = flag
+        return tempcls
 
 
 __all__ = [
