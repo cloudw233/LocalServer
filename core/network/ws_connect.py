@@ -6,6 +6,7 @@ import orjson as json
 
 from fastapi import WebSocket
 
+from core.builtins.elements import AccountElements
 from core.builtins.message_constructors import MessageChainD, process_message
 from core.utils.http import resp
 
@@ -26,16 +27,24 @@ async def switch_data(
     :return:
     """
     await websocket.accept()
-    recv_data = dict(await websocket.receive()).get("bytes").decode("utf-8").replace("\\", '')
-    logger.debug(recv_data)
-    recv_data = json.loads(recv_data)
-    msgchain = MessageChainD(recv_data)
-    msgchain.serialize()
-    msgchain_data = msgchain.messages
-    usrname, action, verified = msgchain_data[0].username, msgchain_data[0].action, (await msgchain_data[0].verify())
     while True:
+        recv_data = dict(await websocket.receive()).get("bytes").decode("utf-8")
+        logger.debug(recv_data)
+        recv_data = json.loads(recv_data)
+        msgchain = MessageChainD(recv_data)
+        msgchain.serialize()
+        msgchain_data = msgchain.messages
+        usrname, action, verified = msgchain_data[0].username, msgchain_data[0].action, (await msgchain_data[0].verify())
+        if (not verified) and action == "register":
+            await msgchain_data[0].register()
+            logger.debug("Registering user: "+usrname)
+            verified = True
+            await resp(websocket, 0, "Successfully registered", "register")
+        if verified:pass
+        else:
+            return
         try:
-            if verified and usrname not in pool[pool_name]:
+            if verified:
                 pool[pool_name][usrname] = websocket
             else:
                 del pool[pool_name][usrname]
@@ -48,9 +57,8 @@ async def switch_data(
                         if connection.get(usrname):
                             await connection[usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
                 case "login":
+                    logger.info("Login successful: "+ usrname)
                     await resp(websocket, 0, "Login successful", 'login')
-                case "register":
-                    await resp(websocket, 0, "Register successful", 'register')
         except Exception as e:
             del pool[pool_name][usrname]
             logger.error(e)

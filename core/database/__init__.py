@@ -11,4 +11,4 @@ async def init_db():
             'core.database.models',]
         },
     )
-    await Tortoise.generate_schemas()
+    await Tortoise.generate_schemas(safe=True)

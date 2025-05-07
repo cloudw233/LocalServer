@@ -6,7 +6,6 @@ class User(Model):
     password = fields.CharField(max_length=50)
     device_id = fields.JSONField()
     key = fields.CharField(max_length=50)
-    warning = fields.BooleanField()
 
     def __str__(self):
         return self.username

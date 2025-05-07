@@ -2,6 +2,8 @@ import attrs
 import orjson as json
 from typing import Literal, Union
 
+from loguru import logger
+
 from core.pydantic_models import *
 from core.database.models import User
 from copy import deepcopy
@@ -71,22 +73,41 @@ class AccountElements(BaseElements):
         验证账户
         :return 布尔值
         """
+        logger.debug(f"Verifying user: {self.username}")
+        user = await User.get_or_none(username=self.username)
         if self.action == "register":
-            user = User(
-                username=self.username,
-                password=self.password,
-                device_id=[self.device_id],
-                face_recognition_data=self.face_recognition_data
-            )
-            await user.save()
-            return True
+            return False
         elif self.action == "login":
-            user = await User.get(username=self.username)
-            if user and user.password == self.password:
+            if user and user.password == self.password or \
+                    self.device_id in user.device_id:
+                if self.device_id not in user.device_id:
+                    user.device_id.append(self.device_id)
+                    await user.save()
+                logger.debug("User verified successfully")
                 return True
         elif self.action == "data":
-            return True
+            if user.key == self.key:
+                return True
+            return False
         return False
+
+    async def register(self):
+        """
+        注册
+        :return: (bool(),{why})
+        """
+        usr = await User.get_or_none(username=self.username)
+        if usr:
+            return False, "exist"
+        user = User(
+            username=self.username,
+            password=self.password,
+            device_id=[self.device_id],
+            key=self.key,
+            face_recognition_data=self.face_recognition_data,
+        )
+        await user.save()
+        return True, "success"
 
 
 @define
@@ -345,37 +366,40 @@ class ResponseElements(BaseElements):
     响应元素
     """
     ret_code: int
-    msg: str
+    message: str
+    flag: str = None
 
     class Meta:
         type = "ResponseElement"
-        flag = None
 
     mapping = {
         0: "Success",
         1: "Warning",
         2: "Error",
     }
+    @property
+    def msg(self):
+        return f"[{self.mapping[self.ret_code]}] {self.message}"
 
     @classmethod
     def assign(
             cls,
             ret_code: Literal[0, 1, 2],
-            msg: str = None,
+            message: str = None,
             flag: str = None
     ):
         """
         响应元素
         :param ret_code: 返回码，0:成功，1:警告，2:错误
-        :param msg: 消息
+        :param message: 消息
         :param flag: 标志
         :return:
         """
         tempcls = deepcopy(cls(
             ret_code=ret_code,
-            msg=f"[{cls.mapping[ret_code]}] {msg}"
+            message=message,
+            flag=flag
         ))
-        tempcls.Meta.flag = flag
         return tempcls
 
 

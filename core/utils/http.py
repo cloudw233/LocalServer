@@ -6,6 +6,8 @@ from typing import Any
 
 from typing import Literal
 from fastapi import WebSocket
+from loguru import logger
+
 from core.builtins.assigned_element import ResponseElement
 
 
@@ -40,6 +42,6 @@ async def resp(ws:WebSocket, code: Literal[0,1,2], msg:str, flag:Any) -> list:
     :param flag: 标志
     :return: 返回消息
     """
-    __message = [{"meta": 'ResponseElement', "data": ResponseElement(ret_code=code, msg=msg, flag=flag).dump()}]
-    await ws.send_text(str(json.dumps(__message)))
-    return __message
+    __message = [{"meta": 'ResponseElement', "data": ResponseElement(ret_code=code, message=msg, flag=flag).dump()}]
+    await ws.send_text(json.dumps(__message).decode("utf-8"))
+    logger.debug(f"Send message: {__message}")

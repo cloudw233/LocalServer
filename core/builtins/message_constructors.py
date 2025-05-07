@@ -4,6 +4,7 @@ from typing import Union
 from extensions.deepseek import get_deepseek_anwser
 from extensions.weather import QWeather
 from .assigned_element import *
+from ..pydantic_models import Indices, WeatherDaily
 
 
 class MessageChainInstance:
@@ -92,5 +93,49 @@ async def process_message(httpx_client, msgchain):
 
 MessageChain = MessageChainInstance.assign
 MessageChainD = MessageChainInstance.assign_deserialized
+
+"""
+WeatherInfoElement(
+            indices=[Indices(
+                date='2222-22-2',
+                type='114514',
+                name='指数',
+                level='12',
+                category='xd',
+                text='适合玩原神',
+            )],
+            daily=[WeatherDaily(fxDate="1",
+                                sunrise="2",
+                                sunset="3",
+                                moonrise="4",
+                                moonset='5',
+                                moonPhase='6',
+                                moonPhaseIcon='7',
+                                tempMax='8',
+                                tempMin='9',
+                                iconDay='100',
+                                textDay='114514',
+                                iconNight='100',
+                                textNight='1919810',
+                                wind360Day='11',
+                                windDirDay='111',
+                                windScaleDay='1111',
+                                windSpeedDay='11111',
+                                wind360Night='111111',
+                                windDirNight='11111111',
+                                windScaleNight='11111111',
+                                windSpeedNight='111111',
+                                humidity='1111111',
+                                precip='1111111',
+                                pressure='1111111',
+                                vis='11111',
+                                cloud='1111',
+                                uvIndex='111',
+                                )],
+            city="qufu",
+            city_id="114514",
+            lat="114",
+            lon="514"
+        ))"""
 
 __all__ = ["MessageChain", "MessageChainD", "process_message"]
