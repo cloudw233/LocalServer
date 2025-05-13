@@ -86,7 +86,7 @@ class AccountElements(BaseElements):
                 logger.debug("User verified successfully")
                 return True
         elif self.action == "data":
-            if user.key == self.key:
+            if user.key == self.key or self.device_id in user.device_id:
                 return True
             return False
         return False
@@ -361,6 +361,26 @@ class DeepSeekAnswerElements(BaseElements):
 
 
 @define
+class MachineryElements(BaseElements):
+    speed: float = 0.5
+    direction: Literal['F','B','L','R'] = 'F'
+
+    class Meta:
+        type = "MachineryElement"
+
+    @classmethod
+    def assign(
+            cls,
+            speed: float = 0.5,
+            direction: Literal['F','B','L','R'] = 'F'
+    ):
+        return deepcopy(cls(
+            speed=speed,
+            direction=direction
+        ))
+
+
+@define
 class ResponseElements(BaseElements):
     """
     响应元素
@@ -412,5 +432,6 @@ __all__ = [
     'HeartElements',
     'DeepSeekElements',
     'DeepSeekAnswerElements',
+    'MachineryElements',
     'ResponseElements'
 ]

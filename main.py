@@ -11,7 +11,7 @@ from extensions.deepseek import get_deepseek_anwser
 from core.database import init_db
 from core.network.ws_connect import switch_data
 
-httpx_client = httpx.AsyncClient()
+httpx_client = httpx.AsyncClient(verify=False)
 
 connection_pool = {
     "client": {},

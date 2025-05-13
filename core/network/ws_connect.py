@@ -52,15 +52,22 @@ async def switch_data(
             match action:
                 case "data":
                     logger.debug(msgchain_data)
-                    await process_message(httpx_client, msgchain)
-                    for connection in [pool["client"], pool["monitor"]]:
-                        if connection.get(usrname):
-                            await connection[usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
+                    match pool_name:
+                        case "sensor":
+                            for connection in [pool["client"], pool["monitor"]]:
+                                if connection.get(usrname):
+                                    await connection[usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
+                        case "client":
+                            if pool["sensor"].get(usrname):
+                                await pool["sensor"][usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
+                            response = await process_message(httpx_client, msgchain)
+                            await websocket.send_text(json.dumps(response.deserialize()).decode("utf-8"))
                 case "login":
                     logger.info("Login successful: "+ usrname)
                     await resp(websocket, 0, "Login successful", 'login')
         except Exception as e:
             del pool[pool_name][usrname]
+            await websocket.close()
             logger.error(e)
             traceback.print_exc()
             break
