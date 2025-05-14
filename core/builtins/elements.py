@@ -358,10 +358,11 @@ class DeepSeekAnswerElements(BaseElements):
             question=model.question,
             answer=model.answer
         ))
-
-
 @define
 class MachineryElements(BaseElements):
+    """
+    机械控制元素
+    """
     speed: float = 0.5
     direction: Literal['F','B','L','R'] = 'F'
 
@@ -376,6 +377,29 @@ class MachineryElements(BaseElements):
     ):
         return deepcopy(cls(
             speed=speed,
+            direction=direction
+        ))
+
+
+@define
+class StepperMotorElements(BaseElements):
+    """
+    步进电机元素
+    """
+    step: int = 0
+    direction: Literal['cw','ccw'] = 'cw'
+
+    class Meta:
+        type = "StepperMotorElement"
+
+    @classmethod
+    def assign(
+            cls,
+            step: int = 0,
+            direction: Literal['cw','ccw'] = 'cw'
+    ):
+        return deepcopy(cls(
+            step=step,
             direction=direction
         ))
 
@@ -433,5 +457,6 @@ __all__ = [
     'DeepSeekElements',
     'DeepSeekAnswerElements',
     'MachineryElements',
+    'StepperMotorElements',
     'ResponseElements'
 ]

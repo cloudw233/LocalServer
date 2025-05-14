@@ -44,6 +44,8 @@ class MessageChainInstance:
                     msg_chain_lst.append(DeepSeekAnswerElement(**data))
                 case "MachineryElement":
                     msg_chain_lst.append(MachineryElement(**data))
+                case "StepperMotorElement":
+                    msg_chain_lst.append(StepperMotorElement(**data))
                 case "ResponseElement":
                     msg_chain_lst.append(ResponseElement(**data))
                 case _:
