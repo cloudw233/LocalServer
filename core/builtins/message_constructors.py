@@ -1,9 +1,10 @@
 from copy import deepcopy
-from typing import Union, Literal, List
+from typing import Union
 
 from extensions.deepseek import get_deepseek_anwser
 from extensions.weather import QWeather
 from .assigned_element import *
+from .elements import *
 from ..pydantic_models import Indices, WeatherDaily
 
 
@@ -56,16 +57,16 @@ class MessageChainInstance:
 
     @classmethod
     def assign(cls,
-               elements: List[
-                   AccountElement,
-                   SensorElement,
-                   WeatherElement,
-                   WeatherInfoElement,
-                   UIElement,
-                   HeartElement,
-                   DeepSeekElement,
-                   DeepSeekAnswerElement,
-                   ResponseElement]) -> "MessageChain":
+               elements: list[Union[
+                   AccountElements,
+                   SensorElements,
+                   WeatherElements,
+                   WeatherInfoElements,
+                   UIElements,
+                   HeartElements,
+                   DeepSeekElements,
+                   DeepSeekAnswerElements,
+                   ResponseElements]]) -> "MessageChain":
         cls.serialized = True
         cls.messages = elements
         return deepcopy(cls())
