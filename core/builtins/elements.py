@@ -86,7 +86,7 @@ class AccountElements(BaseElements):
                 logger.debug("User verified successfully")
                 return True
         elif self.action == "data":
-            if user.key == self.key or self.device_id in user.device_id:
+            if user.key == self.key or self.device_id in user.device_id or user.password == self.key:
                 return True
             return False
         return False
