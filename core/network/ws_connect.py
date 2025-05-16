@@ -9,6 +9,7 @@ from fastapi import WebSocket
 from core.builtins.elements import AccountElements
 from core.builtins.message_constructors import MessageChainD, process_message
 from core.utils.http import resp
+from core.utils.ws import get_ws_data
 
 
 async def switch_data(
@@ -28,7 +29,7 @@ async def switch_data(
     """
     await websocket.accept()
     while True:
-        recv_data = dict(await websocket.receive()).get("bytes").decode("utf-8")
+        recv_data = await get_ws_data(websocket)
         logger.debug(recv_data)
         recv_data = json.loads(recv_data)
         msgchain = MessageChainD(recv_data)
