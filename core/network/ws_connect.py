@@ -6,7 +6,7 @@ import orjson as json
 
 from fastapi import WebSocket
 
-from core.builtins.elements import AccountElements
+from core.builtins.elements import AccountElements, DeepSeekElements, WeatherElements
 from core.builtins.message_constructors import MessageChainD, process_message
 from core.utils.http import resp
 from core.utils.ws import get_ws_data
@@ -61,8 +61,9 @@ async def switch_data(
                         case "client":
                             if pool["sensor"].get(usrname):
                                 await pool["sensor"][usrname].send_text(json.dumps(msgchain.deserialize()).decode("utf-8"))
-                            response = await process_message(httpx_client, msgchain)
-                            await websocket.send_text(json.dumps(response.deserialize()).decode("utf-8"))
+                            if len([_ for _ in msgchain_data if isinstance(_, (DeepSeekElements, WeatherElements))]) > 0:
+                                response = await process_message(httpx_client, msgchain)
+                                await websocket.send_text(json.dumps(response.deserialize()).decode("utf-8"))
                 case "login":
                     logger.info("Login successful: "+ usrname)
                     await resp(websocket, 0, "Login successful", 'login')
