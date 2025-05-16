@@ -31,6 +31,7 @@ class Sensor(BaseModel):
     heart_data: int|None = None
     smoke: dict = {}
     seat: int|None = None
+    gps: str|None = None
 
 
 class Weather(BaseModel):
